@@ -93,7 +93,6 @@ browser refuses local storage the game says so rather than failing quietly.
 
 ```
 sniper-rage.html      the game: source of truth, three.js from a CDN
-assets/               the four environment models, fetched at run time
 build/package.js      packager: inlines three.js, writes public/
 build/vendor/         three.js r128, vendored for the offline build
 build/verify.js       22-check browser verification of the game
@@ -145,19 +144,10 @@ Screen. `docs/BUILD-APK.md` covers turning it into an Android APK.
 
 These are real and worth stating plainly.
 
-- **The rifle's moving parts are unbound.** The sci-fi rifle exports generic
-  node names (`Cylinder.004_0`, `Cube.006_2`), so the bolt, magazine and
-  trigger bindings fail. The weapon fires correctly but does not animate.
-- **Enemies are auto-rigged.** The army character model ships no skeleton and
-  no animation clips, so enemies run through the auto-rigger. Movement is
-  stiffer than a supplied rig would give.
 - **The headless test suites are gone.** Ten suites covering line of sight,
   stability over 36000 frames, input schemes and sector teardown were lost in a
   container reset. `build/verify.js` covers the v21 features only. Rebuilding
   the rest is worth doing before the multiplayer work starts.
-- **Asset licences are uncleared.** The models came from Sketchfab and this
-  repository is public, which counts as distribution. Check each model's
-  licence before treating this as shippable.
 
 ## Multiplayer
 
@@ -167,5 +157,5 @@ rigged, animated characters come from.
 
 ## Licence
 
-Code by Sommyart Imagery. Third-party models are under their own licences,
-which are not yet cleared. See the note above.
+Code by Sommyart Imagery. The game contains no third-party models: the rifle,
+soldiers and site are drawn by the game itself.

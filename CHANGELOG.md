@@ -154,6 +154,24 @@ wall-clock version of these tests reported two false failures for that reason.
 
 ---
 
+## v22 — third-party models removed
+
+All six Sketchfab models are gone: the sci-fi rifle, the army soldier, the
+first-person arms extracted from it, the ruins, the construction props and the
+scaffold stairs. Each was CC-BY-4.0, which requires crediting the author, and
+the decision was to remove them rather than ship them with credits.
+
+- The game now draws its own rifle, soldiers and site dressing, using the
+  fallbacks that were already there for a missing model.
+- The page drops from 7.7 MB to 3.1 MB, and `assets/` no longer exists.
+- The brightness lift that keeps wave 2 hostiles visible was only applied to
+  the downloaded soldier's materials, so the built-in soldiers had lost it. It
+  is now on the built-in materials too. `build/verify.js`: 22 of 22 pass.
+- This also closes the v19 and v20 gaps: no unbound rifle parts, no auto-rigged
+  enemies, no uncleared licences.
+
+---
+
 ## Test suites
 
 Ten headless suites covered boot and cover slots, line-of-sight audits across

@@ -83,12 +83,14 @@ fs.writeFileSync(path.join(SITE, "manifest.webmanifest"), JSON.stringify(manifes
    time. They have to travel with the site, and they have to be precached, or
    "offline" means playing in an empty lot with no ruins and no scaffolding. */
 const ASSET_SRC = path.join(ROOT, "assets");
-const MODELS = ["ruins.glb", "construction.glb", "stairs.glb", "props.glb"];
+// No external models ship any more; the third-party models were removed.
+// The check below still refuses a build whose page fetches a model not listed.
+const MODELS = [];
 const referenced = [...new Set((inlined.match(/assets\/[a-zA-Z0-9_.-]+\.glb/g) || []))]
   .map(s => s.replace("assets/", ""));
 const missingRef = referenced.filter(m => !MODELS.includes(m));
 if (missingRef.length) { console.error("! the page fetches models the packager does not ship:", missingRef); process.exit(1); }
-fs.mkdirSync(path.join(SITE, "assets"), { recursive: true });
+if (MODELS.length) fs.mkdirSync(path.join(SITE, "assets"), { recursive: true });
 for (const m of MODELS) {
   const from = path.join(ASSET_SRC, m);
   if (!fs.existsSync(from)) { console.error("! missing model " + m + " in build/assets/"); process.exit(1); }
@@ -105,7 +107,7 @@ const sw = `/* Sniper Rage offline cache.
 const CACHE = "sniper-rage-${stamp}";
 const ASSETS = ["./", "./index.html", "./manifest.webmanifest",
   "./icon-192.png", "./icon-512.png", "./icon-512-maskable.png",
-${MODELS.map(m => '  "./assets/' + m + '"').join(",\n")}];
+${MODELS.map(m => '  "./assets/' + m + '"').join(",\n")}].filter(Boolean);
 
 self.addEventListener("install", e => {
   e.waitUntil(
