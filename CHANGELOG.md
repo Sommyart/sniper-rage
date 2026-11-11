@@ -154,6 +154,27 @@ wall-clock version of these tests reported two false failures for that reason.
 
 ---
 
+## v23 — Josiah's own sniper rifle
+
+The first-person rifle is now Josiah's own model, supplied as GLB, OBJ, DAE
+and FBX with a separate texture pack. The GLB was used.
+
+- 41,278 triangles, one mesh. The GLB carried no textures, so the base colour,
+  normal, roughness and metalness maps from the pack were baked into it. Base
+  colour and normal at 2048, roughness and metalness packed into one 1024 map.
+  The displacement map is not used by the game and was left out.
+- Turned to face down the barrel: it was modelled along +X with the muzzle at
+  +X, and the game holds the rifle looking down -Z.
+- An overbright specular extension (factor 2.0) from the Blender export was
+  removed so the metal does not glare.
+- 31 MB of source files became one 4.1 MB GLB, embedded in the page. The page
+  is now 8.5 MB.
+- It is one solid mesh, so the bolt, magazine and trigger do not animate. The
+  whole rifle still kicks on recoil and dips on reload.
+- `build/verify.js`: 22 of 22 pass.
+
+---
+
 ## v22 — third-party models removed
 
 All six Sketchfab models are gone: the sci-fi rifle, the army soldier, the
