@@ -1,0 +1,5 @@
+# Large binary models. Enable Git LFS before the first push if you would
+# rather not carry them in normal git history:
+#   git lfs install && git lfs track "*.glb"
+*.glb binary
+*.mp3 binary

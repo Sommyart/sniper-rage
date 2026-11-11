@@ -1,0 +1,12 @@
+# build output: produced by `node build/package.js`, never committed, because
+# it is 20 MB of files that are derived from sniper-rage.html and assets/
+public/
+
+node_modules/
+npm-debug.log*
+.DS_Store
+.vercel
+
+# local verification scratch
+build/shots/
+build/out/
