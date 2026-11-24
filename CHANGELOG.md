@@ -154,6 +154,33 @@ wall-clock version of these tests reported two false failures for that reason.
 
 ---
 
+## v25 — motion-captured hostiles (Mixamo)
+
+- Hostiles are now Mixamo's "Swat" (basic and armored) and "Gas Mask" (elite
+  and heavy) characters, driven by six motion-capture clips: rifle run, aiming
+  idle, firing, crouched aiming, hit reaction and rifle death.
+- Each AI state plays its clip with crossfades: advance runs, cover kneels,
+  peek aims, fire fires, a hit flinches for 0.35 s, and death plays the real
+  fall instead of tipping the rig over.
+- Mixamo bodies hold no weapon, so the rifle is seated in the aiming pose,
+  barrel from the trigger hand through the support hand, then parented to the
+  right hand.
+- The unit tape now rides the upper-arm and chest bones; on a moving body the
+  old fixed heights left it floating in the air.
+- Textured uniforms get a much smaller visibility lift (#0f0e0c instead of
+  #343029); the full lift bleached them grey. The built-in fallback soldiers
+  keep the original lift.
+- Size: textures cut from 4096 to 1024 and the Gas Mask mesh halved (41k to
+  21k triangles). 143 MB and 6 MB of FBX became 1.6 MB and 1.5 MB of GLB.
+- Licence: Mixamo allows its characters and animations in games, commercial
+  ones included, but not redistribution as standalone files. They therefore
+  exist only embedded in the game page; no Mixamo file is committed on its own.
+- A cartoon CC0 set (Quaternius Toon Shooter) was tried first and rejected:
+  fully animated, but its style clashed with the photographed site.
+- Page 11.9 MB -> 16.4 MB. `build/verify.js`: 22 of 22 pass.
+
+---
+
 ## v24 — photographed surfaces and sky (Poly Haven, CC0)
 
 All new assets are from Poly Haven, whose licence page states every asset is
