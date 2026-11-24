@@ -157,5 +157,7 @@ rigged, animated characters come from.
 
 ## Licence
 
+Code by Sommyart Imagery. Surface textures and the construction-site sky are
+from Poly Haven (polyhaven.com), released as CC0; no credit is required.
 Code by Sommyart Imagery. The game contains no third-party models: the rifle,
 soldiers and site are drawn by the game itself.

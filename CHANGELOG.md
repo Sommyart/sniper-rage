@@ -154,6 +154,33 @@ wall-clock version of these tests reported two false failures for that reason.
 
 ---
 
+## v24 — photographed surfaces and sky (Poly Haven, CC0)
+
+All new assets are from Poly Haven, whose licence page states every asset is
+CC0: no credit required, free for commercial use. Downloaded through Josiah's
+browser, since this build environment cannot reach the site directly.
+
+- Surfaces: worn concrete (walls, pillars, slabs), worn concrete floor,
+  asphalt, rusty metal, corrugated iron (shipping containers) and plywood.
+  Diffuse maps at 1024 for the big surfaces and 512 for the rest; the metals
+  and containers also take normal and roughness/metal maps.
+- Brightness held: every diffuse map was normalised to a neutral mid grey and
+  each material's colour scaled to undo it, so surfaces keep the brightness
+  they had. This is the fix for what made the reverted PBR pass too dark.
+- The wall concrete's stains were softened to 38% contrast; at full contrast
+  they read as a leopard pattern.
+- Texture coordinates are re-projected from world space after each sector is
+  built, so a texture repeats every 1.2 to 4 metres instead of stretching once
+  across a 30 m slab.
+- Sky: "Industrial Sunset (Pure Sky)" HDRI as the backdrop and reflection light
+  for the late-afternoon construction site, rotated so its sun lines up with
+  the game's sun. Fog matched to the photographed horizon. The other four
+  sectors keep their painted skies.
+- three.js r128 RGBELoader (MIT) vendored for the sky.
+- Page 8.5 MB -> 11.9 MB. `build/verify.js`: 22 of 22 pass.
+
+---
+
 ## v23 — Josiah's own sniper rifle
 
 The first-person rifle is now Josiah's own model, supplied as GLB, OBJ, DAE
