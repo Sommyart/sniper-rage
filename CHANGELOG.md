@@ -154,6 +154,35 @@ wall-clock version of these tests reported two false failures for that reason.
 
 ---
 
+## v26 — the sniper upgrade
+
+- **Rifle:** the VSS Vintorez with PSO-1 scope by the Arms Museum on Sketchfab,
+  CC0 (credit not required, commercial use allowed). Its 37 parts were kept
+  separate, textures cut from 2048 to 1024 and the file from 19 MB to 3.3 MB.
+  It replaces the v23 rifle for the player and for every hostile.
+- **Real moving parts:** the model's own magazine drops out and returns over
+  the reload, and its bolt carrier, visible in the receiver window, snaps back
+  on every shot. Each part is lifted to a pivot in rifle space so it can be
+  slid whatever its own nesting.
+- **Shot effects:** a first-person flash of three crossed planes with a
+  star-pronged texture at the measured muzzle, a smoke wisp that hangs after
+  the shot, and spent brass thrown from the right of the receiver.
+- **Gloved hands:** the Swat soldier's own hands, posed in his aiming clip and
+  fitted so the right hand closes on the pistol grip and the left sits on the
+  handguard. Legs, neck and head are folded away.
+- **Metal:** sky reflection on the viewmodel cut to 0.28; at full strength the
+  photographed sky turned blued steel bright blue.
+- **Scope:** the PSO-1 reticle: aiming chevron, three holdover chevrons, a mil
+  scale with 10-mil marks, the post, and the stadiametric rangefinder (2 to 10
+  hundred metres for a 1.7 m man). It glows red in the night sector, as the
+  real battery-lit reticle does. The marks are drawn to the lens, not
+  calibrated to the game's variable zoom, so read the rangefinder as a guide.
+- A procedural bolt knob was tried on the v23 rifle and removed: that model
+  already has a bolt handle, fused into its solid mesh.
+- Page 16.4 MB -> 15.4 MB. `build/verify.js`: 22 of 22 pass.
+
+---
+
 ## v25 — motion-captured hostiles (Mixamo)
 
 - Hostiles are now Mixamo's "Swat" (basic and armored) and "Gas Mask" (elite
