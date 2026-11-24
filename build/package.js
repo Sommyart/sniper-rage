@@ -97,6 +97,20 @@ for (const m of MODELS) {
   fs.copyFileSync(from, path.join(SITE, "assets", m));
 }
 
+
+/* ---- static files copied as they are: Android's digital asset links file
+   proves the app and the site belong together, so the installed app runs
+   fullscreen with no browser address bar ---- */
+const STATIC = path.join(__dirname, "static");
+(function copyDir(from, to){
+  if (!fs.existsSync(from)) return;
+  fs.mkdirSync(to, { recursive: true });
+  for (const f of fs.readdirSync(from)) {
+    const a = path.join(from, f), b = path.join(to, f);
+    if (fs.statSync(a).isDirectory()) copyDir(a, b); else fs.copyFileSync(a, b);
+  }
+})(STATIC, SITE);
+
 /* ---- service worker: precache everything, then never touch the network ---- */
 const stamp = "v" + new Date().toISOString().slice(0, 10).replace(/-/g, "") + "-" + String(inlined.length);
 const sw = `/* Sniper Rage offline cache.
