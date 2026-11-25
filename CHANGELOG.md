@@ -308,3 +308,33 @@ Every version through v19 ran clean at zero errors. **The suite files were lost
 in the container reset and are not in this repository.** Rebuilding them is
 worth doing before the multiplayer work starts, since that rewrite will touch
 nearly every system they covered.
+
+---
+
+## v28 — mobile shooter HUD, stances, faster handling, sniper lineup
+
+**Handling**
+- Walk speed 3.4 to 5.6 m/s, sprint 8.6 m/s (Shift unscoped, or the touch
+  stick pushed to its rim while heading forward). Shift while scoped still
+  holds breath. Acceleration, scope-in and touch look are all quicker.
+
+**Stances**
+- Stand, crouch (C) and prone (Z), plus two touch buttons. Camera height,
+  move speed and weapon sway change with stance (sway 1.0 / 0.7 / 0.45).
+- New Mixamo clips: Prone Idle, Prone Forward, Prone Firing Rifle and Crouch
+  Walking, embedded in the page like the rest.
+
+**HUD**
+- Round glass touch buttons with line icons, a compass strip with heading,
+  a minimap (structures, the firing deck, and hostiles that are firing,
+  peeking, spotted or close), and a weapon bar with ammo and a stance toggle.
+
+**Sniper lineup**
+- Slot 1 VSS Vintorez (unchanged), 2 SPR A3G, 3 MK22 .338, 4 M200 .408,
+  5 M107 .50, each a real model in first person and in the soldier's hands.
+  Armory cards list calibre, effective range and weight.
+- Models from Sketchfab under CC BY 4.0, credited on the new Credits screen:
+  "FN SPR A3G" by 8sianDude, "Sniper Rifle" by awakov_dawid, "CheyTac M200"
+  by sanekcloff, "M107 Sniper Rifle" by zacharykozak. Textures cut to 2048
+  (colour, normal) and 1024 (the rest) as JPEG, re-oriented barrel to -Z.
+- The page is now about 45 MB; aimed at phones that run CODM.

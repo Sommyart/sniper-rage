@@ -34,7 +34,9 @@ screen and run with the network off.
 | Fire | left mouse |
 | Scope | right mouse |
 | Magnification | mouse wheel while scoped |
-| Hold breath | `Shift` |
+| Hold breath | `Shift` while scoped |
+| Sprint | `Shift` while not scoped |
+| Crouch / prone | `C` / `Z` |
 | Reload | `R` |
 | Switch weapon | `1`–`5` or `Q` |
 | **Frag grenade** | **hold `G`, release to throw** |
@@ -158,6 +160,7 @@ rigged, animated characters come from.
 ## Licence
 
 Code by Sommyart Imagery. Surface textures and the construction-site sky are
-from Poly Haven (polyhaven.com), released as CC0; no credit is required.
-Code by Sommyart Imagery. The game contains no third-party models: the rifle,
-soldiers and site are drawn by the game itself.
+from Poly Haven (polyhaven.com), CC0. The VSS model is by the Arms Museum on
+Sketchfab, CC0. Soldiers and animation are from Mixamo. The four other rifles
+are Sketchfab models under CC BY 4.0, credited in-game on the Credits screen
+and in CHANGELOG.md (v28).
