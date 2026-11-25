@@ -187,7 +187,7 @@ self.addEventListener("install", e => {
     // a first install takes over at once; an update waits for the player's tap
     const old = await caches.keys();
     // builds before v31 have no update banner to ask with, so take over from those directly
-    if (!old.some(k => /^sniper-rage-v\d+-/.test(k) && k !== CACHE)) self.skipWaiting();
+    if (!old.some(k => /^sniper-rage-v[0-9]+-/.test(k) && k !== CACHE)) self.skipWaiting();
   })());
 });
 
