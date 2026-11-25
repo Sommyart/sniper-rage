@@ -469,3 +469,11 @@ nearly every system they covered.
   start, and the app allows 60 seconds.
 - New APK built with these settings; its signing key is now kept between
   builds so later APKs install over this one.
+
+## v39 — "Capture it" display font
+
+- Title, menus, headings, the intro titles and the wave banner now use
+  "Capture it" by Koczman Bálint, from dafont.com (100% Free: personal and
+  commercial use allowed, not to be sold on its own). Worn military stencil,
+  readable even at menu size. Subset to Latin and shipped as a 39 KB woff2.
+  Replaces the GAME face from v37. Oswald stays for small text and numbers.
