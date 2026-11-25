@@ -416,3 +416,16 @@ nearly every system they covered.
   then UPDATE NOW switches to it on the spot (Capgo updater plugin, manual
   mode, no account or service).
 - The website keeps its own service-worker updates as before.
+
+## v34 — phone layout, aiming, unscope
+
+- Menu fits a phone held sideways: smaller title, menu in two columns.
+- The game's fonts (Oswald, JetBrains Mono, SIL OFL) are now inside the game.
+  Phones and the offline app have neither Bahnschrift nor Google Fonts, so
+  Android was falling back to a handwriting font.
+- Touch controls rearranged like mobile shooters: movement stick on the left,
+  aim by dragging anywhere on the right half, including dragging from the
+  FIRE button while shooting. The v28 buttons had covered most of the old
+  aiming area. SIDES mirrors everything.
+- Scope button now simply toggles. While scoped a red X appears to unscope at
+  once, and tapping the magnification readout steps the zoom.
