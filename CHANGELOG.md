@@ -447,3 +447,10 @@ nearly every system they covered.
   edge. BREATH only appears while scoped. SIDES mirrors it all.
 - Scoped aim on touch no longer slows down at all, and touch aiming is about
   35% quicker overall. SCOPE SENSITIVITY still adjusts it (default 1.0).
+
+## v37 — GAME display font
+
+- Josiah's chosen display face, GAME by Giovanni Luca Mendola (SIL Open Font
+  License 1.1), is built in for the title, menus, screen headings, the intro
+  titles. Oswald stays for small text and numbers, where
+  GAME's small digits are hard to read. Credited on the Credits screen.
