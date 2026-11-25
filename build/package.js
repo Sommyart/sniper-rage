@@ -53,7 +53,7 @@ for (const f in icons) fs.writeFileSync(path.join(SITE, f), icons[f]);
 /* ---- the hosted page: same file, with a real manifest linked ---- */
 const site = inlined.replace(
   /<title>/,
-  '<link rel="manifest" href="manifest.webmanifest">\n<link rel="apple-touch-icon" href="icon-192.png">\n<meta name="theme-color" content="#0a0c0e">\n<title>'
+  '<link rel="manifest" href="manifest.webmanifest">\n<link rel="apple-touch-icon" href="icon-192.png">\n<meta name="theme-color" content="#000000">\n<title>'
 );
 if (site === inlined) { console.error("! could not find <title> to anchor the manifest link"); process.exit(1); }
 fs.writeFileSync(path.join(SITE, "index.html"), site);
@@ -66,8 +66,8 @@ const manifest = {
   scope: "./",
   display: "fullscreen",
   orientation: "landscape",
-  background_color: "#050708",
-  theme_color: "#0a0c0e",
+  background_color: "#000000",
+  theme_color: "#000000",
   categories: ["games"],
   icons: [
     { src: "icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },

@@ -488,9 +488,155 @@ body.touch .tr{top:60px!important;right:72px!important}
 body.touch .br{right:84px!important;bottom:84px!important;top:auto!important}
 body.scoped #wbar,body.scoped #minimap,body.scoped #compass,body.scoped #compass-hd{opacity:.25}
 .credits b{font-size:12px;letter-spacing:.04em;text-transform:none}
+
+/* app mode: nothing that gives away a browser */
+html,body{-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;touch-action:manipulation}
+body *:not(input):not(textarea){-webkit-user-select:none;user-select:none}
+img,svg{-webkit-user-drag:none}
+html.app #m-install,html.app #scr-install{display:none!important}
 </style>
 </head>
 <body>
+<!-- ============ INTRO: plays while the rest of the page streams in ============ -->
+<style>
+#intro{position:fixed;inset:0;z-index:999;background:#000;overflow:hidden;cursor:pointer;
+  font-family:"Rajdhani","Oswald","Arial Narrow",Arial,sans-serif;color:#e8ecef;-webkit-user-select:none;user-select:none}
+#intro.out{transition:opacity .7s ease;opacity:0;pointer-events:none}
+#intro .ret{position:absolute;left:50%;top:50%;width:min(56vmin,420px);height:min(56vmin,420px);transform:translate(-50%,-50%) scale(1.25);opacity:0;
+  animation:i-ret 2.1s cubic-bezier(.2,.7,.2,1) .25s forwards}
+#intro .ret svg{width:100%;height:100%;overflow:visible}
+#intro .ret circle,#intro .ret line{stroke:rgba(255,157,46,.85);fill:none;stroke-width:1.2}
+#intro .ret .dot{fill:#ff3b2f;stroke:none}
+#intro .rng{position:absolute;left:50%;top:calc(50% + min(31vmin,232px));transform:translateX(-50%);font:600 12px/1 "Courier New",monospace;letter-spacing:.35em;color:rgba(255,157,46,.8);opacity:0;animation:i-fade .4s 1.1s forwards}
+@keyframes i-ret{0%{opacity:0;transform:translate(-50%,-50%) scale(1.25) rotate(-8deg)}35%{opacity:1}100%{opacity:1;transform:translate(-50%,-50%) scale(1) rotate(0)}}
+@keyframes i-fade{to{opacity:1}}
+#intro .flash{position:absolute;inset:0;background:radial-gradient(circle at 50% 50%,#fff 0,#ffe2b0 18%,rgba(255,160,60,.0) 60%);opacity:0}
+#intro.shot .flash{animation:i-flash .45s ease-out}
+@keyframes i-flash{0%{opacity:1}100%{opacity:0}}
+#intro.shot .ret,#intro.shot .rng{animation:none;opacity:0;transition:opacity .05s}
+#intro .crack{position:absolute;inset:0;width:100%;height:100%;opacity:0}
+#intro.shot .crack{opacity:1}
+#intro .crack path{fill:none;stroke:rgba(225,235,245,.82);stroke-linecap:round;stroke-dasharray:var(--l);stroke-dashoffset:var(--l)}
+#intro.shot .crack path{animation:i-draw .32s ease-out forwards}
+#intro .crack .hole{fill:#000;stroke:rgba(230,240,250,.9);stroke-width:2}
+#intro .crack .shine{fill:none;stroke:rgba(255,255,255,.25);stroke-width:1}
+@keyframes i-draw{to{stroke-dashoffset:0}}
+#intro.shot .stage{animation:i-shake .5s cubic-bezier(.36,.07,.19,.97)}
+@keyframes i-shake{10%,90%{transform:translate(-2px,1px)}20%,80%{transform:translate(4px,-3px)}30%,50%,70%{transform:translate(-7px,4px)}40%,60%{transform:translate(7px,-2px)}}
+#intro .stage{position:absolute;inset:0}
+#intro .title{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);text-align:center;opacity:0}
+#intro .title h1{margin:0;font-size:min(15vw,150px);font-weight:800;letter-spacing:.12em;line-height:1;text-shadow:0 0 40px rgba(255,120,40,.25)}
+#intro .title h1 b{color:#ff9d2e;font-weight:800;display:inline-block}
+#intro.t1 .title{animation:i-slam .5s cubic-bezier(.2,1.4,.4,1) forwards}
+#intro.t1 .title h1 b{animation:i-glitch 1.4s steps(1) .5s 2}
+@keyframes i-slam{0%{opacity:0;transform:translateY(-50%) scale(1.9);filter:blur(10px)}60%{opacity:1;filter:blur(0)}100%{opacity:1;transform:translateY(-50%) scale(1)}}
+@keyframes i-glitch{0%{transform:none}8%{transform:translate(3px,-2px);text-shadow:-3px 0 #00e5ff,3px 0 #ff2b55}12%{transform:none;text-shadow:none}40%{transform:translate(-4px,1px);text-shadow:4px 0 #00e5ff,-4px 0 #ff2b55}44%{transform:none;text-shadow:none}}
+#intro .tag{margin-top:14px;font-size:min(2.4vw,14px);letter-spacing:.6em;color:rgba(232,236,239,.6);opacity:0}
+#intro.t1 .tag{animation:i-fade .6s .7s forwards}
+#intro .dev{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);text-align:center;opacity:0}
+#intro .dev small{display:block;font-size:min(2.6vw,14px);letter-spacing:.6em;color:rgba(232,236,239,.55);margin-bottom:14px}
+#intro .dev strong{display:block;font-size:min(6.4vw,56px);font-weight:700;letter-spacing:.22em}
+#intro .dev strong i{font-style:normal;color:#ff9d2e}
+#intro .dev .line{width:0;height:2px;margin:18px auto 0;background:linear-gradient(90deg,transparent,#ff9d2e,transparent)}
+#intro.t2 .title{animation:i-out .45s forwards}
+@keyframes i-out{from{opacity:1;transform:translateY(-50%) scale(1)}to{opacity:0;transform:translateY(-50%) scale(.92)}}
+#intro.t2 .crack{transition:opacity .8s;opacity:.18}
+#intro.t2 .dev{transition:opacity .7s .35s;opacity:1}
+#intro.t2 .dev .line{transition:width 1.1s .6s ease;width:min(60vw,460px)}
+#intro .load{position:absolute;left:50%;bottom:9vh;width:min(46vw,300px);transform:translateX(-50%);opacity:0;transition:opacity .4s}
+#intro.t2.wait .load{opacity:1}
+#intro .load i{display:block;height:2px;width:30%;background:#ff9d2e;animation:i-sweep 1.1s ease-in-out infinite}
+#intro .load span{display:block;margin-top:10px;text-align:center;font:600 10px "Courier New",monospace;letter-spacing:.4em;color:rgba(232,236,239,.5)}
+@keyframes i-sweep{0%{transform:translateX(-100%)}100%{transform:translateX(330%)}}
+#intro .skip{position:absolute;right:18px;bottom:14px;font:600 10px "Courier New",monospace;letter-spacing:.3em;color:rgba(232,236,239,.35)}
+#intro .grain{position:absolute;inset:-50%;opacity:.07;pointer-events:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/></filter><rect width='120' height='120' filter='url(%23n)'/></svg>");animation:i-grain .5s steps(4) infinite}
+@keyframes i-grain{0%{transform:translate(0,0)}25%{transform:translate(-5%,3%)}50%{transform:translate(4%,-4%)}75%{transform:translate(-3%,-5%)}}
+#intro .vig{position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 40%,rgba(0,0,0,.85) 100%);pointer-events:none}
+</style>
+<div id="intro" aria-label="Sniper Rage intro">
+  <div class="stage">
+    <div class="ret"><svg viewBox="-100 -100 200 200"><circle r="96"/><circle r="64" style="stroke-dasharray:4 6"/><line x1="-96" y1="0" x2="-10" y2="0"/><line x1="10" y1="0" x2="96" y2="0"/><line x1="0" y1="-96" x2="0" y2="-10"/><line x1="0" y1="10" x2="0" y2="96"/><circle class="dot" r="2.2"/></svg></div>
+    <div class="rng" id="intro-rng">TARGET 0842 M</div>
+    <svg class="crack" id="intro-crack" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice"></svg>
+    <div class="title"><h1>SNIPER <b>RAGE</b></h1><div class="tag">TACTICAL SNIPER OPERATIONS</div></div>
+    <div class="dev"><small>DEVELOPED BY</small><strong>SOMMYART <i>IMAGERY</i></strong><div class="line"></div></div>
+  </div>
+  <div class="flash"></div>
+  <div class="load"><i></i><span>LOADING OPERATION</span></div>
+  <div class="grain"></div><div class="vig"></div>
+  <div class="skip">TAP TO SKIP</div>
+</div>
+<script>
+/* Intro. Plays the moment the page starts arriving, before the game itself
+   has finished downloading, and holds on the studio card until it has. */
+(function(){
+  var el=document.getElementById("intro"); if(!el) return;
+  try{ if(/[?&]nointro/.test(location.search)){ el.parentNode.removeChild(el); window.__introDone=true; return; } }catch(e){}
+  var done=false, finished=false, ac=null, T=[];
+  // a fresh crack pattern every launch, radiating from the impact point
+  (function(){
+    var svg=document.getElementById("intro-crack"), cx=800+(Math.random()*120-60), cy=430+(Math.random()*60-30), h="";
+    function seg(x1,y1,x2,y2,w){ var l=Math.hypot(x2-x1,y2-y1)|0; return '<path style="--l:'+l+'" stroke-width="'+w+'" d="M'+x1.toFixed(0)+' '+y1.toFixed(0)+'L'+x2.toFixed(0)+' '+y2.toFixed(0)+'"/>'; }
+    var rays=15+(Math.random()*5|0), tips=[];
+    for(var i=0;i<rays;i++){
+      var a=i/rays*Math.PI*2+Math.random()*.3, x=cx, y=cy, len=260+Math.random()*520, n=5+(Math.random()*4|0), pts=[[x,y]];
+      for(var k=1;k<=n;k++){ var r=len*k/n, aa=a+(Math.random()-.5)*.28; pts.push([cx+Math.cos(aa)*r,cy+Math.sin(aa)*r]); }
+      for(k=1;k<pts.length;k++){ h+=seg(pts[k-1][0],pts[k-1][1],pts[k][0],pts[k][1],Math.max(.6,2.6-k*.35));
+        if(Math.random()<.35){ var bx=pts[k][0],by=pts[k][1],ba=a+(Math.random()<.5?1:-1)*(.5+Math.random()*.6),bl=40+Math.random()*120; h+=seg(bx,by,bx+Math.cos(ba)*bl,by+Math.sin(ba)*bl,.7); } }
+      tips.push(pts);
+    }
+    // concentric rings joining the rays, like a real web of broken glass
+    for(var ring=1;ring<=3;ring++){ for(i=0;i<tips.length;i++){ var A=tips[i][Math.min(ring+1,tips[i].length-1)], B=tips[(i+1)%tips.length][Math.min(ring+1,tips[(i+1)%tips.length].length-1)]; if(Math.random()<.75) h+=seg(A[0],A[1],B[0],B[1],1); } }
+    h+='<circle class="hole" cx="'+cx+'" cy="'+cy+'" r="9"/><circle class="shine" cx="'+cx+'" cy="'+cy+'" r="22"/>';
+    svg.innerHTML=h;
+  })();
+  function audio(){
+    try{ if(!ac){ var C=window.AudioContext||window.webkitAudioContext; if(C) ac=new C(); } if(ac&&ac.state==="suspended") ac.resume(); }catch(e){}
+    return ac;
+  }
+  function noise(dur,f,q,gain,t0){
+    var a=audio(); if(!a||a.state!=="running") return; t0=a.currentTime+(t0||0);
+    var b=a.createBuffer(1,a.sampleRate*dur|0,a.sampleRate), d=b.getChannelData(0);
+    for(var i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,3);
+    var s=a.createBufferSource(); s.buffer=b; var fl=a.createBiquadFilter(); fl.type="bandpass"; fl.frequency.value=f; fl.Q.value=q;
+    var g=a.createGain(); g.gain.setValueAtTime(gain,t0); g.gain.exponentialRampToValueAtTime(.001,t0+dur);
+    s.connect(fl); fl.connect(g); g.connect(a.destination); s.start(t0);
+  }
+  function tone(f1,f2,dur,gain,type,t0){
+    var a=audio(); if(!a||a.state!=="running") return; t0=a.currentTime+(t0||0);
+    var o=a.createOscillator(); o.type=type||"sine"; o.frequency.setValueAtTime(f1,t0); o.frequency.exponentialRampToValueAtTime(f2,t0+dur);
+    var g=a.createGain(); g.gain.setValueAtTime(gain,t0); g.gain.exponentialRampToValueAtTime(.001,t0+dur);
+    o.connect(g); g.connect(a.destination); o.start(t0); o.stop(t0+dur);
+  }
+  function shotSound(){
+    noise(.5,1400,.6,1.4); noise(1.6,180,.7,1.1);            // crack and boom
+    tone(90,38,.9,.9,"sine");                               // chest thump
+    noise(.25,5200,2,.5,.06);                               // glass
+    tone(3300,3100,.08,.12,"triangle",.75);                 // brass on concrete
+    tone(4100,3900,.06,.08,"triangle",.92);
+  }
+  function at(ms,fn){ T.push(setTimeout(fn,ms)); }
+  function beat(){ tone(60,45,.35,.5,"sine"); }
+  at(400,beat); at(1250,beat);
+  at(2350,function(){ el.classList.add("shot"); shotSound(); if(navigator.vibrate&&(!navigator.userActivation||navigator.userActivation.hasBeenActive)) try{navigator.vibrate([60,40,30]);}catch(e){} });
+  at(3150,function(){ el.classList.add("t1"); tone(55,40,1.2,.5,"sawtooth"); noise(1.2,300,.5,.25); });
+  at(5600,function(){ el.classList.add("t2"); tone(220,330,1.4,.06,"sine"); });
+  at(7600,function(){ finished=true; tryEnd(); });
+  function tryEnd(){
+    if(done) return;
+    if(!window.__gameReady){ el.classList.add("wait"); return; }
+    done=true; for(var i=0;i<T.length;i++) clearTimeout(T[i]);
+    el.classList.add("out"); window.__introDone=true;
+    setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); },800);
+  }
+  window.__introReady=function(){ window.__gameReady=true; if(finished) tryEnd(); };
+  // tapping wakes the audio (phones need a touch first) and skips to the end
+  var taps=0;
+  el.addEventListener("pointerdown",function(){ audio(); taps++;
+    if(taps>1||el.classList.contains("t2")){ finished=true; el.classList.add("t1","t2"); tryEnd(); }
+  });
+})();
+</script>
 <div id="stage">
   <canvas id="c"></canvas>
   <div id="grain"></div>
@@ -13924,6 +14070,47 @@ function goLandscape(){
     if(r&&r.then) r.then(lock,lock); else lock();
   }catch(err){ lock(); }
 }
+
+/* ---------------- app mode ----------------
+   Inside the Android app (a Trusted Web Activity) or an installed copy, the
+   game should feel like a native game, not a web page: no install offer, no
+   selection or long-press menus, no zoom, full screen from the first touch,
+   and the phone's back button pauses or steps back instead of leaving. */
+const AppMode=(function(){
+  let app=false;
+  try{
+    if(document.referrer&&document.referrer.indexOf("android-app://")===0) localStorage.setItem("sr_app","1");
+    app=localStorage.getItem("sr_app")==="1"
+      ||matchMedia("(display-mode: fullscreen)").matches||matchMedia("(display-mode: standalone)").matches
+      ||navigator.standalone===true;
+  }catch(e){}
+  if(app) document.documentElement.classList.add("app");
+  // no pinch or double tap zoom, no text selection, no image dragging, anywhere
+  document.addEventListener("gesturestart",e=>e.preventDefault(),{passive:false});
+  document.addEventListener("dblclick",e=>e.preventDefault(),{passive:false});
+  document.addEventListener("dragstart",e=>e.preventDefault());
+  document.addEventListener("selectstart",e=>{ if(!(e.target&&e.target.closest&&e.target.closest("input,textarea"))) e.preventDefault(); });
+  document.addEventListener("touchmove",e=>{ if(e.touches&&e.touches.length>1) e.preventDefault(); },{passive:false});
+  if(app){
+    // immersive: hide the system bars at the first touch, every launch
+    let went=false;
+    const imm=()=>{ if(went) return; went=true; try{ goLandscape(); }catch(e){} };
+    window.addEventListener("pointerdown",imm,true);
+    document.addEventListener("fullscreenchange",()=>{ if(!document.fullscreenElement) went=false; });
+    // the hardware back button: pause, or back out of a menu, never quit by surprise
+    try{ history.pushState({sr:1},""); }catch(e){}
+    window.addEventListener("popstate",()=>{
+      try{ history.pushState({sr:1},""); }catch(e){}
+      if(Game.state==="play"){ Game.pause(); return; }
+      const open=[...document.querySelectorAll(".screen:not(.hidden)")].map(x=>x.id);
+      if(Game.state==="pause"&&open.indexOf("scr-pause")<0){ UI.show("pause"); return; }
+      if(Game.state==="pause"){ Game.resume(); return; }
+      if(open.length&&open[0]!=="scr-menu"){ refreshMenu(); UI.show("menu"); }
+    });
+  }
+  return {app};
+})();
+
 function isPortrait(){ return (window.innerHeight||0)>(window.innerWidth||1); }
 
 function hintForMode(){
@@ -14543,6 +14730,7 @@ refreshMenu();
 bindSettings();
 $("fps").classList.toggle("hidden",!SAVE.settings.showFps);
 $("boot").classList.add("hidden");
+if(window.__introReady) window.__introReady();
 
 /* ======================= optical scope ==================================
    The lens is a real second render: a narrow field-of-view camera sitting at

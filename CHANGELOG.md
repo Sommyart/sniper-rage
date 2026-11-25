@@ -338,3 +338,22 @@ nearly every system they covered.
   by sanekcloff, "M107 Sniper Rifle" by zacharykozak. Textures cut to 2048
   (colour, normal) and 1024 (the rest) as JPEG, re-oriented barrel to -Z.
 - The page is now about 45 MB; aimed at phones that run CODM.
+
+## v29 — intro sequence and native app feel
+
+**Intro** (about 7.5 s, tap to skip, plays every launch)
+- Black screen, a scope reticle settles on a target with a heartbeat, a
+  gunshot flashes and cracks the screen (a new crack pattern each launch,
+  with crack, boom, glass and brass sounds), SNIPER RAGE slams in with a
+  glitch on RAGE, then "Developed by Sommyart Imagery". It holds on the
+  studio card with a loading bar until the game is ready, so on a first
+  launch the download happens behind the intro instead of a blank page.
+- It sits at the top of the page, so it starts as soon as the first bytes
+  arrive. Sound needs one tap on phones (browser rule); the visuals do not.
+
+**App mode** (Android app or installed copy)
+- No INSTALL APP entry, no text selection, long-press menu, pinch or
+  double-tap zoom, or image dragging. Full screen with system bars hidden
+  from the first touch. The phone's back button pauses the mission or steps
+  back a menu instead of closing the app.
+- Black splash, status and navigation colours.
