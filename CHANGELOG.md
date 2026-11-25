@@ -429,3 +429,12 @@ nearly every system they covered.
   aiming area. SIDES mirrors everything.
 - Scope button now simply toggles. While scoped a red X appears to unscope at
   once, and tapping the magnification readout steps the zoom.
+
+## v35 — faster scoped aim, full-screen updates
+
+- Scoped aiming on touch is about three times faster than before (it slowed
+  to 28% of normal; now 58% times the new SCOPE SENSITIVITY, default 1.5).
+  SCOPE SENSITIVITY in Settings tunes it from 0.5 to 4.0.
+- Updates now take over the whole screen with a large percentage and a bar;
+  the game pauses and nothing else can be touched until the download is
+  complete, then it installs and restarts by itself.

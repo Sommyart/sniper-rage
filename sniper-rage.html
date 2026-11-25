@@ -633,6 +633,17 @@ body.touch.swapsides .bc{left:auto!important;right:14px!important}
   body.touch .bc{bottom:120px!important}
 }
 #zoomsel{pointer-events:auto;cursor:pointer}
+
+/* updates take the whole screen: nothing else can be touched until done */
+#upd.full{left:0;top:0;right:0;bottom:0;transform:none!important;min-width:0;border-radius:0;border:0;
+  background:radial-gradient(ellipse at center,rgba(30,22,12,.97),rgba(0,0,0,.98));display:flex;flex-direction:column;
+  align-items:center;justify-content:center;padding:24px;z-index:2000;opacity:0;pointer-events:none;transition:opacity .35s}
+#upd.full.on{opacity:1;pointer-events:auto}
+#upd.full .u1{font-size:13px;letter-spacing:.4em;text-align:center}
+#upd.full .upct{display:block;font:700 min(22vw,120px)/1 var(--disp);color:#ff9d2e;margin:18px 0 6px;letter-spacing:.02em;text-shadow:0 0 40px rgba(255,157,46,.35)}
+#upd.full .ubar{width:min(520px,80vw);height:6px;margin:14px 0 8px}
+#upd.full .unote{font:500 11px var(--mono);letter-spacing:.2em;color:rgba(232,236,239,.55);text-align:center}
+#upd.full .ubtn{display:none!important}
 </style>
 <div id="intro" aria-label="Sniper Rage intro">
   <div class="stage">
@@ -944,6 +955,7 @@ body.touch.swapsides .bc{left:auto!important;right:14px!important}
       <div class="setrow"><label>TOUCH SIDES</label><div><button class="tgl" id="s-sides">MOVE RIGHT</button></div><output id="o-sides">AIM WITH THE LEFT THUMB</output></div>
       <div class="setrow"><label for="s-sfx">EFFECTS</label><input id="s-sfx" type="range" min="0" max="100"><output id="o-sfx"></output></div>
       <div class="setrow"><label for="s-sens">AIM SENSITIVITY</label><input id="s-sens" type="range" min="20" max="300"><output id="o-sens"></output></div>
+      <div class="setrow"><label for="s-ssens">SCOPE SENSITIVITY</label><input id="s-ssens" type="range" min="50" max="400"><output id="o-ssens"></output></div>
       <div class="setrow"><label>TARGET MARKERS</label><div><button class="tgl" id="s-spot">DISTANT</button></div><output id="o-spot">BRACKETS ON HOSTILES THAT HAVE A LINE ON YOU</output></div>
       <div class="setrow"><label>INVERT VERTICAL</label><div><button class="tgl" id="s-invert">OFF</button></div><output></output></div>
       <div class="setrow"><label>SHADOWS</label><div><button class="tgl" id="s-shadows">ON</button></div><output></output></div>
@@ -8887,7 +8899,7 @@ const SAVE_KEY="sniper_rage_save_v2";
 const DEFAULTS={
   credits:0,bestScore:0,bestWave:0,totalKills:0,totalHeadshots:0,totalHeadshotsRun:0,
   wavesCompleted:0,eliteKills:0,perfectWaves:0,unlocked:[0],equipped:0,claimed:[],
-  settings:{master:.9,music:.62,sfx:1,sens:1,invertY:false,shadows:true,particles:1,showFps:false,post:true,quality:null,swapSides:false,spot:1,view:"third"}
+  settings:{master:.9,music:.62,sfx:1,sens:1,scopeSens:1.5,invertY:false,shadows:true,particles:1,showFps:false,post:true,quality:null,swapSides:false,spot:1,view:"third"}
 };
 const Store={
   data:null,
@@ -11851,7 +11863,10 @@ const Player={
     this.lastHitTime=-99; this.stance=0; this.stanceH=0; this.sprinting=false;
   },
   look(dx,dy){
-    const s=SAVE.settings.sens*.0022*(1-this.ads*.72);
+    // scoped aim slows down for precision, but far less on touch, where a
+    // thumb has only a few centimetres to swing the rifle with
+    const slow=(inputMode==="touch"?.42:.72);
+    const s=SAVE.settings.sens*.0022*(1-this.ads*slow)*(1+this.ads*((SAVE.settings.scopeSens||1.5)-1));
     this.yaw-=dx*s;
     this.pitch-=dy*s*(SAVE.settings.invertY?-1:1);
     this.pitch=clamp(this.pitch,-1.35,1.05);
@@ -14210,7 +14225,8 @@ const Updater={
     let b=document.getElementById("upd");
     if(b) return b;
     b=document.createElement("div"); b.id="upd";
-    b.innerHTML='<div class="u1"><b>UPDATE</b> <span id="upd-t">DOWNLOADING</span></div><div class="ubar"><i id="upd-bar"></i></div>'+
+    b.className="full";
+    b.innerHTML='<div class="u1"><b>SNIPER RAGE</b> <span id="upd-t">DOWNLOADING UPDATE</span></div><span class="upct" id="upd-pct">0%</span><div class="ubar"><i id="upd-bar"></i></div><div class="unote" id="upd-note">PLEASE KEEP THE APP OPEN</div>'+
       '<div class="ubtn"><button id="upd-go">UPDATE NOW</button><button id="upd-later" class="ghost">LATER</button></div>';
     document.body.appendChild(b);
     b.querySelector("#upd-go").addEventListener("click",()=>this.apply());
@@ -14218,8 +14234,14 @@ const Updater={
     return b;
   },
   show(pct){
-    const b=this.el(); if(this.snooze&&Date.now()-this.snooze<10*60e3&&this.state==="ready") return;
+    const b=this.el();
     b.classList.add("on"); b.classList.toggle("ready",this.state==="ready");
+    // the game stops while it updates
+    try{ if(Game.state==="play") Game.pause(); }catch(e){}
+    const P=document.getElementById("upd-pct"), N=document.getElementById("upd-note");
+    if(P) P.textContent=this.state==="ready"?"100%":((pct||0)+"%");
+    if(N) N.textContent=this.state==="ready"?"INSTALLING AND RESTARTING":"PLEASE KEEP THE APP OPEN";
+    if(this.state==="ready"&&!this._auto){ this._auto=true; setTimeout(()=>this.apply(),900); }
     document.getElementById("upd-t").textContent=this.state==="ready"
       ?("NEW VERSION"+(this.newVer?" "+this.newVer.toUpperCase():"")+" IS READY")
       :("DOWNLOADING NEW VERSION"+(pct!=null?"  "+pct+"%":"..."));
@@ -14911,14 +14933,17 @@ $("m-continue").onclick=()=>{ Sound.init(); Sound.resume(); Sound.ui(); Game.con
 /* settings */
 function bindSettings(){
   const s=SAVE.settings;
-  const pairs=[["s-master","o-master","master",100],["s-music","o-music","music",100],["s-sfx","o-sfx","sfx",100],["s-sens","o-sens","sens",100]];
+  const pairs=[["s-master","o-master","master",100],["s-music","o-music","music",100],["s-sfx","o-sfx","sfx",100],["s-sens","o-sens","sens",100],["s-ssens","o-ssens","scopeSens",100]];
   for(const [inp,out,key,mul] of pairs){
     const el=$(inp),o=$(out);
     el.value=Math.round(s[key]*mul);
-    o.textContent=key==="sens"?(s[key]).toFixed(2):Math.round(s[key]*100)+"%";
+    if(s[key]==null) s[key]=key==="scopeSens"?1.5:1;
+    el.value=Math.round(s[key]*mul);
+    const fmt=()=>(key==="sens"||key==="scopeSens")?(s[key]).toFixed(2):Math.round(s[key]*100)+"%";
+    o.textContent=fmt();
     el.oninput=()=>{
       s[key]=el.value/mul;
-      o.textContent=key==="sens"?(s[key]).toFixed(2):Math.round(s[key]*100)+"%";
+      o.textContent=fmt();
       Sound.applySettings(); Store.save();
     };
   }
