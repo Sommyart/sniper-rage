@@ -47,12 +47,8 @@ jobs:
         run: |
           cp ../build/android/MainActivity.java android/app/src/main/java/com/sommyart/sniperrage/MainActivity.java
           sed -i 's|android:name=".MainActivity"|android:name=".MainActivity"\n            android:screenOrientation="sensorLandscape"|' android/app/src/main/AndroidManifest.xml
-          mkdir -p assets
-          cp ../public/icon-512.png assets/icon-only.png
-          cp ../public/icon-512.png assets/icon-foreground.png
-          cp ../public/icon-512.png assets/splash.png
-          cp ../public/icon-512.png assets/splash-dark.png
-          npx --yes @capacitor/assets@^3 generate --android --iconBackgroundColor '#000000' --splashBackgroundColor '#000000' --splashBackgroundColorDark '#000000' || echo "icon generation skipped"
+          rm -rf android/app/src/main/res/mipmap-anydpi-v26
+          cp -r ../build/android/res/* android/app/src/main/res/
           npx cap sync android
 
       - name: Build the APK
