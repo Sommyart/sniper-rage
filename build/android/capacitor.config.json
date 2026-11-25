@@ -1,0 +1,8 @@
+{
+  "appId": "com.sommyart.sniperrage",
+  "appName": "Sniper Rage",
+  "webDir": "www",
+  "android": { "backgroundColor": "#000000", "allowMixedContent": false, "webContentsDebuggingEnabled": false },
+  "server": { "androidScheme": "https" },
+  "plugins": { "CapacitorUpdater": { "autoUpdate": false } }
+}

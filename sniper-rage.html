@@ -14138,6 +14138,8 @@ function goLandscape(){
    A new deploy downloads in the background while you play. A banner shows
    the progress, then UPDATE NOW: the run is saved, the new version takes over
    and the game restarts on it. Nothing to reinstall. */
+const GAME_VERSION="__SR_VERSION__";
+const IS_NATIVE=!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());
 const Updater={
   reg:null, ver:"", newVer:"", state:"",
   el(){
@@ -14182,7 +14184,40 @@ const Updater={
     let reloading=false;
     sw.addEventListener("controllerchange",()=>{ if(reloading) return; reloading=true; location.reload(); });
   },
+  /* The Android app carries the game inside it. It asks the website whether
+     a newer build exists, downloads it in the background and switches to it
+     in place: same screen, no reinstall, no browser anywhere. */
+  native(){
+    const U=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.CapacitorUpdater; if(!U) return;
+    try{ U.notifyAppReady(); }catch(e){}
+    this.ver=GAME_VERSION;
+    let busy=false;
+    const check=async()=>{
+      if(busy||this.state==="ready") return; busy=true;
+      try{
+        const r=await fetch("https://sniper-rage.vercel.app/app/update.json?t="+Date.now(),{cache:"no-store"});
+        const j=await r.json();
+        const num=v=>parseInt(String(v).replace(/\D/g,""),10)||0;
+        if(j&&j.version&&num(j.version)>num(GAME_VERSION)){
+          this.newVer=j.version; this.state="dl"; this.show(0);
+          const sub=U.addListener("download",info=>{ if(this.state==="dl") this.show(Math.min(99,Math.round(info.percent||0))); });
+          const b=await U.download({url:j.url,version:j.version});
+          try{ sub&&sub.remove&&sub.remove(); }catch(e){}
+          this.bundle=b; this.state="ready"; this.show();
+        }
+      }catch(e){ if(this.state==="dl"){ this.state=""; const el=document.getElementById("upd"); if(el) el.classList.remove("on"); } }
+      busy=false;
+    };
+    setTimeout(check,4000); setInterval(check,20*60e3);
+    document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible") check(); });
+  },
   apply(){
+    if(IS_NATIVE&&this.bundle){
+      try{ if(Game.state==="play"||Game.state==="pause") Game.autosave(); }catch(e){}
+      document.getElementById("upd-t").textContent="INSTALLING...";
+      window.Capacitor.Plugins.CapacitorUpdater.set({id:this.bundle.id});
+      return;
+    }
     const w=this.reg&&this.reg.waiting; if(!w) return;
     try{ if(Game.state==="play"||Game.state==="pause") Game.autosave(); }catch(e){}
     document.getElementById("upd-t").textContent="INSTALLING...";
@@ -14199,7 +14234,7 @@ const AppMode=(function(){
   let app=false;
   try{
     if(document.referrer&&document.referrer.indexOf("android-app://")===0) localStorage.setItem("sr_app","1");
-    app=localStorage.getItem("sr_app")==="1"
+    app=!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform())||localStorage.getItem("sr_app")==="1"
       ||matchMedia("(display-mode: fullscreen)").matches||matchMedia("(display-mode: standalone)").matches
       ||navigator.standalone===true;
   }catch(e){}
@@ -14453,6 +14488,7 @@ const Install={
   },
   registerSW(){
     // only meaningful if a sw.js has been uploaded alongside the page
+    if(IS_NATIVE){ Updater.native(); return; }      // the app updates itself, see Updater.native
     if(!("serviceWorker" in navigator)||!this.secure()) return;
     navigator.serviceWorker.register("sw.js").then(reg=>Updater.watch(reg)).catch(()=>{});
   },

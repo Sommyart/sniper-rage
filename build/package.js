@@ -22,7 +22,8 @@ const SITE = OUT;   // the hosted site IS the output directory
 
 fs.mkdirSync(SITE, { recursive: true });
 
-let html = fs.readFileSync(SRC, "utf8");
+const version = (fs.readFileSync(path.join(ROOT, "CHANGELOG.md"), "utf8").match(/^## (v\d+)/gm) || ["v0"]).pop().slice(3);
+let html = fs.readFileSync(SRC, "utf8").split("__SR_VERSION__").join(version);
 const three = fs.readFileSync(THREE, "utf8");
 
 /* ---- inline three.js ---- */
@@ -136,7 +137,6 @@ const STATIC = path.join(__dirname, "static");
 })(STATIC, SITE);
 
 /* ---- service worker: precache everything, then never touch the network ---- */
-const version = (fs.readFileSync(path.join(ROOT, "CHANGELOG.md"), "utf8").match(/^## (v\d+)/gm) || ["v0"]).pop().slice(3);
 const stamp = version + "-" + new Date().toISOString().slice(0, 10).replace(/-/g, "") + "-" + String(inlined.length);
 const sw = `/* Sniper Rage offline cache.
    The whole game is one page with three.js, the soundtrack and every model
@@ -227,3 +227,37 @@ console.log("public/sniper-rage.html  " + (fs.statSync(path.join(OUT, "sniper-ra
 console.log("public/");
 for (const x of list) console.log("  " + x.f.padEnd(26) + (x.bytes / 1024).toFixed(0).padStart(7) + " KB");
 console.log("cache stamp: " + stamp);
+
+/* ---- the Android app's update bundle ----
+   The installed app carries the game inside it and never loads it from the
+   web. To update it on the screen, it reads app/update.json, downloads this
+   zip of the hosted site and switches to it. Stored, not deflated: almost
+   everything inside is already compressed. */
+(function makeBundle(){
+  const APPDIR = path.join(SITE, "app");
+  fs.rmSync(APPDIR, { recursive: true, force: true });
+  fs.mkdirSync(APPDIR, { recursive: true });
+  const files = [["index.html", path.join(SITE, "index.html")]]
+    .concat(["icon-192.png","icon-512.png","icon-512-maskable.png","manifest.webmanifest"].map(f => [f, path.join(SITE, f)]))
+    .concat(fs.readdirSync(path.join(SITE, "assets")).map(f => ["assets/" + f, path.join(SITE, "assets", f)]))
+    .filter(f => fs.existsSync(f[1]));
+  const T = new Int32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; T[n] = c; }
+  const crc = b => { let c = -1; for (let i = 0; i < b.length; i++) c = T[(c ^ b[i]) & 255] ^ (c >>> 8); return (c ^ -1) >>> 0; };
+  const local = [], central = []; let off = 0;
+  for (const [name, file] of files) {
+    const data = fs.readFileSync(file), nm = Buffer.from(name), c = crc(data);
+    const h = Buffer.alloc(30); h.writeUInt32LE(0x04034b50, 0); h.writeUInt16LE(20, 4); h.writeUInt32LE(c, 14);
+    h.writeUInt32LE(data.length, 18); h.writeUInt32LE(data.length, 22); h.writeUInt16LE(nm.length, 26);
+    local.push(h, nm, data);
+    const d = Buffer.alloc(46); d.writeUInt32LE(0x02014b50, 0); d.writeUInt16LE(20, 4); d.writeUInt16LE(20, 6); d.writeUInt32LE(c, 16);
+    d.writeUInt32LE(data.length, 20); d.writeUInt32LE(data.length, 24); d.writeUInt16LE(nm.length, 28); d.writeUInt32LE(off, 42);
+    central.push(d, nm); off += 30 + nm.length + data.length;
+  }
+  const cd = Buffer.concat(central), e = Buffer.alloc(22);
+  e.writeUInt32LE(0x06054b50, 0); e.writeUInt16LE(files.length, 8); e.writeUInt16LE(files.length, 10);
+  e.writeUInt32LE(cd.length, 12); e.writeUInt32LE(off, 16);
+  const zipName = "bundle-" + version + ".zip";
+  fs.writeFileSync(path.join(APPDIR, zipName), Buffer.concat(local.concat([cd, e])));
+  fs.writeFileSync(path.join(APPDIR, "update.json"), JSON.stringify({ version, url: "https://sniper-rage.vercel.app/app/" + zipName }, null, 2));
+  console.log("  app bundle", zipName, Math.round((off + cd.length) / 1048576), "MB");
+})();

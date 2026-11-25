@@ -402,3 +402,17 @@ nearly every system they covered.
   drawn version if the clip cannot load within a few seconds.
 - Updates reuse unchanged asset files, so an update downloads only what
   changed. Phones on a build older than v31 are moved onto this one directly.
+
+## v33 — a real Android app
+
+- The Android app is now built with Capacitor and carries the whole game
+  inside it, like Bike Rush and Operation Ninja. It never opens Chrome or
+  the website: no Vercel address, no browser loading, no "Running in Chrome",
+  no pop-ups. Landscape, full screen with the system bars hidden, screen kept
+  awake. Built by a GitHub Actions workflow (.github/workflows/android-apk.yml).
+- Updates inside the app: on launch and every 20 minutes it reads
+  /app/update.json from the site; if a newer build exists it downloads
+  /app/bundle-vNN.zip in the background with the same banner and progress,
+  then UPDATE NOW switches to it on the spot (Capgo updater plugin, manual
+  mode, no account or service).
+- The website keeps its own service-worker updates as before.
