@@ -357,3 +357,15 @@ nearly every system they covered.
   from the first touch. The phone's back button pauses the mission or steps
   back a menu instead of closing the app.
 - Black splash, status and navigation colours.
+
+## v30 — filmed intro shot from Google Flow
+
+- The gunshot in the intro is now real footage: an 8 s 720p clip generated
+  in Google Flow (Veo 3.1 Lite) on Josiah's account, a round smashing
+  through glass in a dark ruin, with its own sound. Re-encoded to 2.9 MB
+  and embedded. Timeline: reticle and heartbeat on black, cut to the clip,
+  title over the hole left in the glass, studio card, game.
+- Phones only allow sound after a touch: the clip starts muted on a cold
+  launch and the first tap turns the sound on; a second tap skips.
+- The drawn crack sequence from v29 stays as the fallback if a device
+  cannot play the clip.
