@@ -112,7 +112,8 @@ const STATIC = path.join(__dirname, "static");
 })(STATIC, SITE);
 
 /* ---- service worker: precache everything, then never touch the network ---- */
-const stamp = "v" + new Date().toISOString().slice(0, 10).replace(/-/g, "") + "-" + String(inlined.length);
+const version = (fs.readFileSync(path.join(ROOT, "CHANGELOG.md"), "utf8").match(/^## (v\d+)/gm) || ["v0"]).pop().slice(3);
+const stamp = version + "-" + new Date().toISOString().slice(0, 10).replace(/-/g, "") + "-" + String(inlined.length);
 const sw = `/* Sniper Rage offline cache.
    The whole game is one page with three.js, the soundtrack and every model
    inlined, so precaching that page is precaching the game. Nothing here ever
@@ -123,13 +124,43 @@ const ASSETS = ["./", "./index.html", "./manifest.webmanifest",
   "./icon-192.png", "./icon-512.png", "./icon-512-maskable.png",
 ${MODELS.map(m => '  "./assets/' + m + '"').join(",\n")}].filter(Boolean);
 
+const VERSION = "${version}";
+const EXPECT = ${Buffer.byteLength(site)};
+function tell(msg){ self.clients.matchAll({includeUncontrolled:true}).then(cs => cs.forEach(c => c.postMessage(msg))); }
+
+/* The page is the whole game, so it is fetched by hand to report progress to
+   the update banner while the player keeps playing the old version. */
+async function fetchPage(c){
+  const res = await fetch("./index.html", {cache:"no-store"});
+  if (!res.ok || !res.body) { await c.add("./index.html"); return; }
+  const reader = res.body.getReader(), parts = []; let got = 0, last = 0;
+  for (;;) {
+    const {done, value} = await reader.read(); if (done) break;
+    parts.push(value); got += value.length;
+    const pct = Math.min(99, Math.floor(got / EXPECT * 100));
+    if (pct !== last) { last = pct; tell({type:"sr-progress", version:VERSION, pct}); }
+  }
+  const body = new Blob(parts, {type:"text/html"});
+  const page = new Response(body, {headers:{"content-type":"text/html; charset=utf-8"}});
+  await c.put("./index.html", page.clone()); await c.put("./", page);
+}
+
 self.addEventListener("install", e => {
-  e.waitUntil(
-    caches.open(CACHE)
-      // one at a time, so a single failure cannot abort the whole install
-      .then(c => Promise.all(ASSETS.map(u => c.add(u).catch(() => null))))
-      .then(() => self.skipWaiting())
-  );
+  e.waitUntil((async () => {
+    const c = await caches.open(CACHE);
+    try { await fetchPage(c); } catch (err) { await c.add("./index.html").catch(() => null); }
+    // the rest one at a time, so a single failure cannot abort the install
+    await Promise.all(ASSETS.filter(u => u !== "./" && u !== "./index.html").map(u => c.add(u).catch(() => null)));
+    tell({type:"sr-ready", version:VERSION});
+    // a first install takes over at once; an update waits for the player's tap
+    const old = await caches.keys();
+    if (!old.some(k => k.indexOf("sniper-rage-") === 0 && k !== CACHE)) self.skipWaiting();
+  })());
+});
+
+self.addEventListener("message", e => {
+  if (e.data === "sr-skip") self.skipWaiting();
+  if (e.data === "sr-version" && e.source) e.source.postMessage({type:"sr-version", version:VERSION});
 });
 
 self.addEventListener("activate", e => {

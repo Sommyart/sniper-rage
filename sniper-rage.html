@@ -494,6 +494,19 @@ html,body{-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;tou
 body *:not(input):not(textarea){-webkit-user-select:none;user-select:none}
 img,svg{-webkit-user-drag:none}
 html.app #m-install,html.app #scr-install{display:none!important}
+
+#upd{position:fixed;left:50%;top:12px;transform:translate(-50%,-140%);z-index:900;min-width:min(420px,86vw);padding:12px 16px 12px;
+  background:rgba(10,12,14,.92);border:1px solid rgba(255,157,46,.5);border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.6);
+  font-family:var(--disp);color:#e8ecef;transition:transform .35s cubic-bezier(.2,.9,.3,1);pointer-events:auto}
+#upd.on{transform:translate(-50%,0)}
+#upd .u1{font-size:12px;letter-spacing:.22em}
+#upd .u1 b{color:#ff9d2e;margin-right:8px}
+#upd .ubar{height:3px;margin:9px 0 2px;background:rgba(255,255,255,.12);border-radius:2px;overflow:hidden}
+#upd .ubar i{display:block;height:100%;width:3%;background:#ff9d2e;transition:width .3s}
+#upd .ubtn{display:none;gap:8px;margin-top:10px}
+#upd.ready .ubtn{display:flex}
+#upd button{flex:1;padding:9px 0;border-radius:6px;border:1px solid #ff9d2e;background:#ff9d2e;color:#111;font:700 12px var(--disp);letter-spacing:.2em;cursor:pointer}
+#upd button.ghost{background:transparent;color:#e8ecef;border-color:rgba(255,255,255,.25)}
 </style>
 </head>
 <body>
@@ -14097,6 +14110,63 @@ function goLandscape(){
   }catch(err){ lock(); }
 }
 
+
+/* ---------------- in-game updates ----------------
+   A new deploy downloads in the background while you play. A banner shows
+   the progress, then UPDATE NOW: the run is saved, the new version takes over
+   and the game restarts on it. Nothing to reinstall. */
+const Updater={
+  reg:null, ver:"", newVer:"", state:"",
+  el(){
+    let b=document.getElementById("upd");
+    if(b) return b;
+    b=document.createElement("div"); b.id="upd";
+    b.innerHTML='<div class="u1"><b>UPDATE</b> <span id="upd-t">DOWNLOADING</span></div><div class="ubar"><i id="upd-bar"></i></div>'+
+      '<div class="ubtn"><button id="upd-go">UPDATE NOW</button><button id="upd-later" class="ghost">LATER</button></div>';
+    document.body.appendChild(b);
+    b.querySelector("#upd-go").addEventListener("click",()=>this.apply());
+    b.querySelector("#upd-later").addEventListener("click",()=>{ b.classList.remove("on"); this.snooze=Date.now(); });
+    return b;
+  },
+  show(pct){
+    const b=this.el(); if(this.snooze&&Date.now()-this.snooze<10*60e3&&this.state==="ready") return;
+    b.classList.add("on"); b.classList.toggle("ready",this.state==="ready");
+    document.getElementById("upd-t").textContent=this.state==="ready"
+      ?("NEW VERSION"+(this.newVer?" "+this.newVer.toUpperCase():"")+" IS READY")
+      :("DOWNLOADING NEW VERSION"+(pct!=null?"  "+pct+"%":"..."));
+    document.getElementById("upd-bar").style.width=(this.state==="ready"?100:(pct||3))+"%";
+  },
+  watch(reg){
+    this.reg=reg; const sw=navigator.serviceWorker;
+    if(!sw.controller) return;                       // first install: nothing to update from
+    sw.addEventListener("message",e=>{
+      const d=e.data||{};
+      if(d.type==="sr-version"&&!this.ver) this.ver=d.version;
+      if(d.type==="sr-progress"&&this.state!=="ready"){ this.state="dl"; this.newVer=d.version; this.show(d.pct); }
+      if(d.type==="sr-ready"&&d.version!==this.ver&&reg.waiting){ this.state="ready"; this.newVer=d.version; this.show(); }
+    });
+    try{ sw.controller.postMessage("sr-version"); }catch(e){}
+    const check=()=>{ if(reg.waiting){ this.state="ready"; this.show(); } };
+    check();
+    reg.addEventListener("updatefound",()=>{
+      const w=reg.installing; if(!w) return;
+      if(this.state!=="ready"){ this.state="dl"; this.show(null); }
+      w.addEventListener("statechange",()=>{ if(w.state==="installed") check(); });
+    });
+    const poll=()=>reg.update().catch(()=>{});
+    poll(); setInterval(poll,20*60e3);
+    document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible") poll(); });
+    let reloading=false;
+    sw.addEventListener("controllerchange",()=>{ if(reloading) return; reloading=true; location.reload(); });
+  },
+  apply(){
+    const w=this.reg&&this.reg.waiting; if(!w) return;
+    try{ if(Game.state==="play"||Game.state==="pause") Game.autosave(); }catch(e){}
+    document.getElementById("upd-t").textContent="INSTALLING...";
+    w.postMessage("sr-skip");
+  }
+};
+
 /* ---------------- app mode ----------------
    Inside the Android app (a Trusted Web Activity) or an installed copy, the
    game should feel like a native game, not a web page: no install offer, no
@@ -14359,7 +14429,7 @@ const Install={
   registerSW(){
     // only meaningful if a sw.js has been uploaded alongside the page
     if(!("serviceWorker" in navigator)||!this.secure()) return;
-    navigator.serviceWorker.register("sw.js").catch(()=>{});
+    navigator.serviceWorker.register("sw.js").then(reg=>Updater.watch(reg)).catch(()=>{});
   },
   boot(){
     this.ensureManifest();

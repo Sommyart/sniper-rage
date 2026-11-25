@@ -369,3 +369,17 @@ nearly every system they covered.
   launch and the first tap turns the sound on; a second tap skips.
 - The drawn crack sequence from v29 stays as the fallback if a device
   cannot play the clip.
+
+## v31 — in-game updates
+
+- A new deploy now downloads in the background while the old version keeps
+  playing. A banner slides in at the top with the download progress, then
+  "NEW VERSION vNN IS READY" with UPDATE NOW and LATER. UPDATE NOW saves the
+  run and restarts the game on the new version, on the same screen; nothing
+  is reinstalled. LATER hides it for ten minutes.
+- The game checks on launch, whenever it comes back to the foreground, and
+  every 20 minutes. The version number comes from this changelog.
+- The service worker no longer replaces itself silently on an update; a first
+  install still takes over at once.
+- The Android app needs no rebuild for this or any content update: it opens
+  the live game and caches it.
