@@ -642,17 +642,29 @@ html.app #m-install,html.app #scr-install{display:none!important}
   function buzz(){ if(navigator.vibrate&&(!navigator.userActivation||navigator.userActivation.hasBeenActive)) try{navigator.vibrate([60,40,30]);}catch(e){} }
   at(400,beat); at(1250,beat);
   if(useVid){
-    // the filmed shot: Flow footage of a round going through glass, with its own sound
-    at(1900,function(){
-      el.classList.add("vid");
-      try{ V.currentTime=0; V.muted=!(navigator.userActivation&&navigator.userActivation.hasBeenActive);
-        var pr=V.play(); if(pr&&pr.catch) pr.catch(function(){ V.muted=true; V.play().catch(function(){ el.classList.remove("vid"); el.classList.add("shot"); }); });
-      }catch(e){ el.classList.remove("vid"); el.classList.add("shot"); }
+    // the filmed shot: Flow footage of a round going through glass, with its
+    // own sound. Titles follow the clip's own clock, so a slow connection
+    // delays them with the footage instead of running ahead of it.
+    var started=false, cue1=false, cue2=false;
+    function fallback(){ if(started) return; started=true; useVid=false; el.classList.remove("vid"); el.classList.add("shot"); shotSound(); buzz();
+      at(800,function(){ el.classList.add("t1"); }); at(3200,function(){ el.classList.add("t2"); }); at(5200,function(){ finished=true; tryEnd(); }); }
+    V.addEventListener("timeupdate",function(){
+      var t=V.currentTime;
+      if(!cue1&&t>=1.45){ cue1=true; buzz(); }
+      if(!cue2&&t>=3.0){ cue2=true; el.classList.add("t1"); tone(55,40,1.2,.5,"sawtooth"); }
+      if(t>=5.4&&!el.classList.contains("t2")){ el.classList.add("t2"); tone(220,330,1.4,.06,"sine"); }
     });
-    at(3450,buzz);
-    at(4900,function(){ el.classList.add("t1"); tone(55,40,1.2,.5,"sawtooth"); });
-    at(7300,function(){ el.classList.add("t2"); tone(220,330,1.4,.06,"sine"); });
-    at(9700,function(){ finished=true; tryEnd(); });
+    V.addEventListener("ended",function(){ finished=true; tryEnd(); });
+    V.addEventListener("error",fallback);
+    at(1900,function(){
+      try{ V.muted=!(navigator.userActivation&&navigator.userActivation.hasBeenActive);
+        var go=function(){ if(started) return; started=true; el.classList.add("vid"); };
+        V.addEventListener("playing",go);
+        var pr=V.play(); if(pr&&pr.catch) pr.catch(function(){ V.muted=true; V.play().catch(fallback); });
+      }catch(e){ fallback(); }
+    });
+    at(6500,function(){ if(!started) fallback(); });          // footage never arrived
+    at(16000,function(){ finished=true; tryEnd(); });          // hard stop
   }else{
     at(2350,function(){ el.classList.add("shot"); shotSound(); buzz(); });
     at(3150,function(){ el.classList.add("t1"); tone(55,40,1.2,.5,"sawtooth"); noise(1.2,300,.5,.25); });
@@ -13859,6 +13871,17 @@ const keys={w:false,a:false,s:false,d:false,shift:false,
 let mouseDown=false, keyFire=false, touchFire=false;
 // "mouse" uses pointer lock, "keyboard" plays unlocked, "touch" shows the on-screen pads
 let inputMode = (window.matchMedia&&window.matchMedia("(pointer:coarse)").matches) ? "touch" : "mouse";
+/* Phones fire fake mouse events after every tap. Those must never flip the
+   game into mouse mode (which hides the touch controls and asks for pointer
+   lock, the source of Chrome's "to show your cursor" notice). */
+let lastTouchAt=-1e9;
+window.addEventListener("touchstart",()=>{ lastTouchAt=performance.now(); },{capture:true,passive:true});
+window.addEventListener("pointerdown",e=>{ if(e.pointerType==="touch"||e.pointerType==="pen") lastTouchAt=performance.now(); },{capture:true,passive:true});
+function fakeMouse(e){
+  return performance.now()-lastTouchAt<1500
+    ||(e&&e.sourceCapabilities&&e.sourceCapabilities.firesTouchEvents)
+    ||(typeof AppMode!=="undefined"&&AppMode.app&&inputMode==="touch");
+}
 
 const Game={
   state:"menu",       // menu | play | pause | over
@@ -14226,6 +14249,7 @@ let lockFallback=false, mouseX=0, mouseY=0, mouseIn=false;
 function isLocked(){ return document.pointerLockElement===$("stage"); }
 function freeLook(){ return lockFallback&&!isLocked(); }
 function lockPointer(){
+  if(inputMode==="touch"||fakeMouse()) return;
   const s=$("stage");
   if(!s.requestPointerLock){ setFallback(true); return; }
   try{
@@ -14249,7 +14273,7 @@ document.addEventListener("pointerlockchange",()=>{
 
 /* ------------------------------- mouse ---------------------------------- */
 document.addEventListener("mousemove",e=>{
-  if(inputMode==="touch"&&(e.movementX||e.movementY)) setMode("mouse");   // hybrid laptop picked up a mouse
+  if(inputMode==="touch"&&(e.movementX||e.movementY)&&!fakeMouse(e)) setMode("mouse");   // hybrid laptop picked up a mouse
   mouseX=e.clientX; mouseY=e.clientY; mouseIn=true;
   if(Game.state!=="play") return;
   if(isLocked()||freeLook()) Player.look(e.movementX||0,e.movementY||0);
@@ -14258,6 +14282,7 @@ document.addEventListener("mouseleave",()=>{ mouseIn=false; });
 document.addEventListener("mouseenter",()=>{ mouseIn=true; });
 $("stage").addEventListener("mousedown",e=>{
   Sound.init(); Sound.resume();
+  if(fakeMouse(e)) return;
   setMode("mouse");
   if(Game.state!=="play") return;
   if(!isLocked()&&!lockFallback) lockPointer();   // ask once, then just play unlocked
@@ -14949,7 +14974,7 @@ Pipeline.setTier(SAVE.settings.quality||autoQuality(),false);
 Assets.init();
 Assets.preload((ok,total)=>{
   if(!total) return;
-  UI.toast("ASSETS",ok+" OF "+total+" LOADED");
+  if(ok<total) console.warn("assets",ok,"of",total,"loaded");
   // Bodies built before the models arrived are still primitives, so drop the
   // pool and let the next spawn rebuild them against the loaded assets.
   if(typeof Waves!=="undefined"&&Waves.pool){

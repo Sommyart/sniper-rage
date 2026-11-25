@@ -51,11 +51,35 @@ const icons = { "icon-192.png": grab("ICON192"), "icon-512.png": grab("ICON512")
 for (const f in icons) fs.writeFileSync(path.join(SITE, f), icons[f]);
 
 /* ---- the hosted page: same file, with a real manifest linked ---- */
-const site = inlined.replace(
+const site0 = inlined.replace(
   /<title>/,
   '<link rel="manifest" href="manifest.webmanifest">\n<link rel="apple-touch-icon" href="icon-192.png">\n<meta name="theme-color" content="#000000">\n<title>'
 );
-if (site === inlined) { console.error("! could not find <title> to anchor the manifest link"); process.exit(1); }
+if (site0 === inlined) { console.error("! could not find <title> to anchor the manifest link"); process.exit(1); }
+
+/* ---- the hosted page keeps its big blobs as separate files ----
+   Fifty megabytes of base64 inside the HTML makes the phone's main thread
+   parse for many seconds, freezing the intro and every timer. The hosted
+   page instead references them as files, which download in parallel off the
+   main thread, are cached by hash, and decode asynchronously. The standalone
+   sniper-rage.html keeps everything inline. */
+const crypto = require("crypto");
+const BLOBDIR = path.join(SITE, "assets");
+fs.mkdirSync(BLOBDIR, { recursive: true });
+for (const f of fs.readdirSync(BLOBDIR)) if (/^x-/.test(f)) fs.unlinkSync(path.join(BLOBDIR, f));
+const EXT = {"model/gltf-binary":"glb","video/mp4":"mp4","audio/mpeg":"mp3","image/jpeg":"jpg","image/png":"png","image/webp":"webp","application/octet-stream":"bin","image/vnd.radiance":"hdr"};
+const BLOBS = [];
+let site = "", at = 0;
+for (;;) {
+  const i = site0.indexOf('"data:', at); if (i < 0) { site += site0.slice(at); break; }
+  const semi = site0.indexOf(";base64,", i), end = site0.indexOf('"', i + 1);
+  if (semi < 0 || end < 0 || semi > end || end - semi < 65536) { site += site0.slice(at, i + 1); at = i + 1; continue; }
+  const mime = site0.slice(i + 6, semi), buf = Buffer.from(site0.slice(semi + 8, end), "base64");
+  const name = "x-" + crypto.createHash("sha1").update(buf).digest("hex").slice(0, 12) + "." + (EXT[mime] || "bin");
+  if (!BLOBS.some(x => x.name === name)) { fs.writeFileSync(path.join(BLOBDIR, name), buf); BLOBS.push({name, size: buf.length}); }
+  site += site0.slice(at, i) + '"assets/' + name + '"'; at = end + 1;
+}
+console.log("  externalised", BLOBS.length, "blobs,", Math.round(BLOBS.reduce((a,b)=>a+b.size,0)/1048576), "MB; page now", Math.round(site.length/1048576*10)/10, "MB");
 fs.writeFileSync(path.join(SITE, "index.html"), site);
 
 const manifest = {
@@ -125,36 +149,45 @@ const ASSETS = ["./", "./index.html", "./manifest.webmanifest",
 ${MODELS.map(m => '  "./assets/' + m + '"').join(",\n")}].filter(Boolean);
 
 const VERSION = "${version}";
-const EXPECT = ${Buffer.byteLength(site)};
+const FILES = ${JSON.stringify([["./index.html", Buffer.byteLength(site)]].concat(BLOBS.map(b => ["./assets/" + b.name, b.size])))};
+const EXPECT = FILES.reduce((a, f) => a + f[1], 0);
 function tell(msg){ self.clients.matchAll({includeUncontrolled:true}).then(cs => cs.forEach(c => c.postMessage(msg))); }
 
 /* The page is the whole game, so it is fetched by hand to report progress to
    the update banner while the player keeps playing the old version. */
-async function fetchPage(c){
-  const res = await fetch("./index.html", {cache:"no-store"});
-  if (!res.ok || !res.body) { await c.add("./index.html"); return; }
-  const reader = res.body.getReader(), parts = []; let got = 0, last = 0;
+let got = 0, last = 0;
+async function fetchOne(c, url, size){
+  // hashed files never change: reuse them from the previous version's cache
+  if (url.indexOf("/assets/x-") >= 0) { const old = await caches.match(url); if (old) { await c.put(url, old); got += size; return; } }
+  const res = await fetch(url, {cache:"no-store"});
+  if (!res.ok || !res.body) { await c.add(url); got += size; return; }
+  const reader = res.body.getReader(), parts = [];
   for (;;) {
     const {done, value} = await reader.read(); if (done) break;
     parts.push(value); got += value.length;
     const pct = Math.min(99, Math.floor(got / EXPECT * 100));
     if (pct !== last) { last = pct; tell({type:"sr-progress", version:VERSION, pct}); }
   }
-  const body = new Blob(parts, {type:"text/html"});
-  const page = new Response(body, {headers:{"content-type":"text/html; charset=utf-8"}});
-  await c.put("./index.html", page.clone()); await c.put("./", page);
+  const type = res.headers.get("content-type") || "application/octet-stream";
+  const r = new Response(new Blob(parts, {type}), {headers:{"content-type":type}});
+  if (url === "./index.html") await c.put("./", r.clone());
+  await c.put(url, r);
+}
+async function fetchPage(c){
+  for (const [u, n] of FILES) await fetchOne(c, u, n);
 }
 
 self.addEventListener("install", e => {
   e.waitUntil((async () => {
     const c = await caches.open(CACHE);
-    try { await fetchPage(c); } catch (err) { await c.add("./index.html").catch(() => null); }
+    try { await fetchPage(c); } catch (err) { await Promise.all(FILES.map(f => c.add(f[0]).catch(() => null))); }
     // the rest one at a time, so a single failure cannot abort the install
     await Promise.all(ASSETS.filter(u => u !== "./" && u !== "./index.html").map(u => c.add(u).catch(() => null)));
     tell({type:"sr-ready", version:VERSION});
     // a first install takes over at once; an update waits for the player's tap
     const old = await caches.keys();
-    if (!old.some(k => k.indexOf("sniper-rage-") === 0 && k !== CACHE)) self.skipWaiting();
+    // builds before v31 have no update banner to ask with, so take over from those directly
+    if (!old.some(k => /^sniper-rage-v\d+-/.test(k) && k !== CACHE)) self.skipWaiting();
   })());
 });
 

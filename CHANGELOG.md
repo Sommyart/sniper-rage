@@ -383,3 +383,22 @@ nearly every system they covered.
   install still takes over at once.
 - The Android app needs no rebuild for this or any content update: it opens
   the live game and caches it.
+
+## v32 — fixes from the phone recording
+
+- **No more "to show your cursor" notice.** Phones send fake mouse events
+  after every tap; the game took them for a real mouse, hid the touch
+  controls and asked for pointer lock, which made Chrome show that notice.
+  Taps can no longer switch the game into mouse mode or request the lock.
+- The "ASSETS N OF N LOADED" toast is gone (now only a console warning when
+  something fails).
+- **The Flow intro now actually plays on phones.** The hosted page carried
+  50 MB of base64 inside the HTML, and parsing it froze the phone's main
+  thread, so the intro's timers never ran and the old reticle simply sat
+  there. The hosted page is now 1.8 MB; models, textures, sky, music and the
+  intro clip are separate hashed files in assets/, downloaded in parallel
+  and cached for good. The single-file sniper-rage.html stays all-in-one.
+- Intro titles now follow the clip's own clock, with a fallback to the
+  drawn version if the clip cannot load within a few seconds.
+- Updates reuse unchanged asset files, so an update downloads only what
+  changed. Phones on a build older than v31 are moved onto this one directly.
