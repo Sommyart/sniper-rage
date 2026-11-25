@@ -154,6 +154,26 @@ wall-clock version of these tests reported two false failures for that reason.
 
 ---
 
+## v27 — third person
+
+- The player is now a visible soldier: Mixamo's "Swat Guy" (urban camo, so he
+  reads apart from the hostiles), textures cut to 1024 and mesh halved, 1.9 MB.
+- He plays the shared motion-capture clips: run when moving, aim at rest,
+  fire on each shot, the death fall at zero health. His upper body bends with
+  the camera's pitch so the rifle follows the aim. The VSS is seated between
+  his hands in the aiming pose, as on the hostiles.
+- Camera over the right shoulder (0.66 right, 0.38 up, 2.9 back), turning with
+  the aim, and pulled in when a pillar or wall would come between camera and
+  head.
+- Shots still travel down the camera line, so the crosshair stays exact; the
+  flash and tracer leave his muzzle and the tracer converges on the aim line.
+- Bringing the scope up slides the camera into his eyes and hides him, so the
+  PSO-1 view is unchanged.
+- SETTINGS > VIEW switches between THIRD PERSON (default) and FIRST PERSON.
+- Page 15.4 MB -> 17.9 MB. `build/verify.js`: 22 of 22 pass.
+
+---
+
 ## v26 — the sniper upgrade
 
 - **Rifle:** the VSS Vintorez with PSO-1 scope by the Arms Museum on Sketchfab,
