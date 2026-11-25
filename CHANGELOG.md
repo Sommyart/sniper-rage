@@ -438,3 +438,12 @@ nearly every system they covered.
 - Updates now take over the whole screen with a large percentage and a bar;
   the game pauses and nothing else can be touched until the download is
   complete, then it installs and restarts by itself.
+
+## v36 — split screen, full-speed scope
+
+- Touch screen split in two: the LEFT half aims (drag anywhere, including
+  from FIRE and SCOPE in its bottom corner); the RIGHT half is the movement
+  pad, with reload, frag, weapon, crouch and prone in one column on the right
+  edge. BREATH only appears while scoped. SIDES mirrors it all.
+- Scoped aim on touch no longer slows down at all, and touch aiming is about
+  35% quicker overall. SCOPE SENSITIVITY still adjusts it (default 1.0).

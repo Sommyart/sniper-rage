@@ -644,6 +644,49 @@ body.touch.swapsides .bc{left:auto!important;right:14px!important}
 #upd.full .ubar{width:min(520px,80vw);height:6px;margin:14px 0 8px}
 #upd.full .unote{font:500 11px var(--mono);letter-spacing:.2em;color:rgba(232,236,239,.55);text-align:center}
 #upd.full .ubtn{display:none!important}
+
+/* ======== v36 split screen ========
+   LEFT half: aim. Drag anywhere there; FIRE and SCOPE sit in its bottom
+   corner and also aim when dragged. RIGHT half: the movement pad, with the
+   small action buttons in one column along the right edge, out of the way.
+   SIDES in Settings mirrors it. */
+body.touch #tlook{left:0!important;right:48%!important}
+body.touch #tstick{left:auto!important;right:64px!important;width:44%!important;height:78%!important}
+body.touch #tfire{left:22px!important;right:auto!important;bottom:22px!important;top:auto!important;width:84px!important;height:84px!important}
+body.touch #taim{left:122px!important;right:auto!important;bottom:28px!important;top:auto!important;width:60px!important;height:60px!important}
+body.touch #tunscope{left:122px!important;right:auto!important;top:auto!important;bottom:100px!important;width:52px!important;height:52px!important}
+body.touch #tbreath{left:196px!important;right:auto!important;bottom:28px!important;top:auto!important;width:52px!important;height:52px!important}
+body.touch #treload,body.touch #tnade,body.touch #twpn,body.touch #tcrouch,body.touch #tprone{left:auto!important;right:10px!important;top:auto!important;width:48px!important;height:48px!important}
+body.touch #tprone{bottom:12px!important}
+body.touch #tcrouch{bottom:66px!important}
+body.touch #twpn{bottom:120px!important}
+body.touch #tnade{bottom:174px!important}
+body.touch #treload{bottom:228px!important}
+body.touch #tpause{right:10px!important;left:auto!important;top:64px!important}
+body.touch .br{right:72px!important;left:auto!important;top:118px!important;bottom:auto!important}
+body.touch .bc{left:14px!important;right:auto!important;bottom:auto!important;top:172px!important;width:190px}
+@media (max-height:400px){
+  body.touch #tfire{width:74px!important;height:74px!important}
+  body.touch #taim{left:108px!important}
+  body.touch #tunscope{left:108px!important;bottom:92px!important}
+  body.touch #tbreath{left:176px!important}
+  body.touch #treload,body.touch #tnade,body.touch #twpn,body.touch #tcrouch,body.touch #tprone{width:42px!important;height:42px!important}
+  body.touch #tprone{bottom:8px!important} body.touch #tcrouch{bottom:56px!important} body.touch #twpn{bottom:104px!important}
+  body.touch #tnade{bottom:152px!important} body.touch #treload{bottom:200px!important}
+  body.touch #tpause{top:56px!important}
+  body.touch .bc{top:136px!important}
+}
+/* mirrored */
+body.touch.swapsides #tlook{left:48%!important;right:0!important}
+body.touch.swapsides #tstick{right:auto!important;left:64px!important}
+body.touch.swapsides #tfire{left:auto!important;right:22px!important}
+body.touch.swapsides #taim,body.touch.swapsides #tunscope{left:auto!important;right:122px!important}
+body.touch.swapsides #tbreath{left:auto!important;right:196px!important}
+body.touch.swapsides #treload,body.touch.swapsides #tnade,body.touch.swapsides #twpn,body.touch.swapsides #tcrouch,body.touch.swapsides #tprone{right:auto!important;left:10px!important}
+body.touch.swapsides .bc{left:auto!important;right:14px!important}
+body.touch.swapsides #minimap{left:auto;right:12px}
+/* breath only matters through the scope */
+body.touch:not(.scoped) #tbreath{display:none!important}
 </style>
 <div id="intro" aria-label="Sniper Rage intro">
   <div class="stage">
@@ -8899,7 +8942,7 @@ const SAVE_KEY="sniper_rage_save_v2";
 const DEFAULTS={
   credits:0,bestScore:0,bestWave:0,totalKills:0,totalHeadshots:0,totalHeadshotsRun:0,
   wavesCompleted:0,eliteKills:0,perfectWaves:0,unlocked:[0],equipped:0,claimed:[],
-  settings:{master:.9,music:.62,sfx:1,sens:1,scopeSens:1.5,invertY:false,shadows:true,particles:1,showFps:false,post:true,quality:null,swapSides:false,spot:1,view:"third"}
+  settings:{master:.9,music:.62,sfx:1,sens:1,scopeSens:1,invertY:false,shadows:true,particles:1,showFps:false,post:true,quality:null,swapSides:false,spot:1,view:"third"}
 };
 const Store={
   data:null,
@@ -11865,8 +11908,8 @@ const Player={
   look(dx,dy){
     // scoped aim slows down for precision, but far less on touch, where a
     // thumb has only a few centimetres to swing the rifle with
-    const slow=(inputMode==="touch"?.42:.72);
-    const s=SAVE.settings.sens*.0022*(1-this.ads*slow)*(1+this.ads*((SAVE.settings.scopeSens||1.5)-1));
+    const slow=(inputMode==="touch"?0:.72);
+    const s=SAVE.settings.sens*.0022*(1-this.ads*slow)*(1+this.ads*((SAVE.settings.scopeSens||1)-1));
     this.yaw-=dx*s;
     this.pitch-=dy*s*(SAVE.settings.invertY?-1:1);
     this.pitch=clamp(this.pitch,-1.35,1.05);
@@ -14356,7 +14399,7 @@ function isPortrait(){ return (window.innerHeight||0)>(window.innerWidth||1); }
 function hintForMode(){
   const h=$("m-hint"); if(!h) return;
   h.innerHTML = inputMode==="touch"
-    ? "Left stick moves. Drag anywhere on the right to aim, even from FIRE. Tap the scope to zoom in, the red X to come out.<br>Your mission is saved automatically and can be continued from this menu."
+    ? "Drag the left side to aim, even from FIRE. Right side moves. Tap the scope to zoom in, the red X to come out.<br>Your mission is saved automatically and can be continued from this menu."
     : "Mouse look, left click to fire. Hold G and let go to throw a frag. Or play on the keyboard: W A S D to move, arrow keys to aim, ENTER to fire, F to scope.<br>Your mission is saved automatically and can be continued from this menu.";
 }
 if(inputMode==="touch") document.body.classList.add("touch");
@@ -14789,7 +14832,7 @@ $("stage").addEventListener("wheel",e=>{
   window.addEventListener("touchmove",e=>{
     for(const t of e.changedTouches){
       if(t.identifier===lookId){
-        Player.look((t.clientX-lx)*1.55,(t.clientY-ly)*1.55);
+        Player.look((t.clientX-lx)*2.1,(t.clientY-ly)*2.1);
         lx=t.clientX; ly=t.clientY; e.preventDefault();
       }else if(t.identifier===stickId){
         const r=stick.getBoundingClientRect();
@@ -14937,7 +14980,7 @@ function bindSettings(){
   for(const [inp,out,key,mul] of pairs){
     const el=$(inp),o=$(out);
     el.value=Math.round(s[key]*mul);
-    if(s[key]==null) s[key]=key==="scopeSens"?1.5:1;
+    if(s[key]==null) s[key]=1;
     el.value=Math.round(s[key]*mul);
     const fmt=()=>(key==="sens"||key==="scopeSens")?(s[key]).toFixed(2):Math.round(s[key]*100)+"%";
     o.textContent=fmt();
