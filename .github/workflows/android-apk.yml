@@ -28,6 +28,13 @@ jobs:
           distribution: temurin
           java-version: 21
 
+      # one debug signing key for every build, so a new APK installs over the old one
+      - name: Keep the signing key between builds
+        uses: actions/cache@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: sniper-rage-debug-keystore
+
       - name: Build the game
         run: node build/package.js
 

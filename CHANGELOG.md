@@ -454,3 +454,18 @@ nearly every system they covered.
   License 1.1), is built in for the title, menus, screen headings, the intro
   titles. Oswald stays for small text and numbers, where
   GAME's small digits are hard to read. Credited on the Credits screen.
+
+## v38 — app start-up and update fixes
+
+- The intro now holds on its last card with "LOADING GAME ASSETS nn%" and a
+  real progress bar until every model and animation is loaded, so the menu
+  never appears with placeholder shapes.
+- In the Android app the intro's sound plays from the start (no tap needed).
+- The app checks for a newer version the moment it opens and shows the
+  full-screen "DOWNLOADING GAME ASSETS" screen until it is installed.
+- Fixed the likely reason app updates did not stick: the updater rolls back
+  a new version that does not report in within 10 seconds, and the report
+  came only after the game finished loading. It now reports at the very
+  start, and the app allows 60 seconds.
+- New APK built with these settings; its signing key is now kept between
+  builds so later APKs install over this one.

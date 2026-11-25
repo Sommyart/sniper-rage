@@ -567,7 +567,7 @@ html.app #m-install,html.app #scr-install{display:none!important}
 #intro.t2 .crack{transition:opacity .8s;opacity:.18}
 #intro.t2 .dev{transition:opacity .7s .35s;opacity:1}
 #intro.t2 .dev .line{transition:width 1.1s .6s ease;width:min(60vw,460px)}
-#intro .load{position:absolute;left:50%;bottom:9vh;width:min(46vw,300px);transform:translateX(-50%);opacity:0;transition:opacity .4s}
+#intro .load{position:absolute;left:50%;bottom:9vh;width:min(60vw,420px);transform:translateX(-50%);opacity:0;transition:opacity .4s}
 #intro.t2.wait .load{opacity:1}
 #intro .load i{display:block;height:2px;width:30%;background:#ff9d2e;animation:i-sweep 1.1s ease-in-out infinite}
 #intro .load span{display:block;margin-top:10px;text-align:center;font:600 10px "SR Mono",monospace;letter-spacing:.4em;color:rgba(232,236,239,.5)}
@@ -715,7 +715,16 @@ body.touch:not(.scoped) #tbreath{display:none!important}
 (function(){
   var el=document.getElementById("intro"); if(!el) return;
   try{ if(/[?&]nointro/.test(location.search)){ el.parentNode.removeChild(el); window.__introDone=true; return; } }catch(e){}
-  var done=false, finished=false, ac=null, T=[];
+  var done=false, finished=false, ac=null, T=[], assetsDone=false;
+  // the Android app's updater must hear from a fresh build at once, or it rolls back
+  try{ var CU=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.CapacitorUpdater; if(CU) CU.notifyAppReady(); }catch(e){}
+  var NATIVE=!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());
+  window.__assetProgress=function(d,n){
+    var pc=Math.round(d/Math.max(1,n)*100), sp=document.querySelector("#intro .load span"), bar=document.querySelector("#intro .load i");
+    if(sp) sp.textContent="LOADING GAME ASSETS  "+pc+"%";
+    if(bar){ bar.style.animation="none"; bar.style.transform="none"; bar.style.width=pc+"%"; }
+    if(d>=n){ assetsDone=true; if(finished) tryEnd(); }
+  };
   // a fresh crack pattern every launch, radiating from the impact point
   (function(){
     var svg=document.getElementById("intro-crack"), cx=800+(Math.random()*120-60), cy=430+(Math.random()*60-30), h="";
@@ -779,7 +788,7 @@ body.touch:not(.scoped) #tbreath{display:none!important}
     V.addEventListener("ended",function(){ finished=true; tryEnd(); });
     V.addEventListener("error",fallback);
     at(1900,function(){
-      try{ V.muted=!(navigator.userActivation&&navigator.userActivation.hasBeenActive);
+      try{ V.muted=!NATIVE&&!(navigator.userActivation&&navigator.userActivation.hasBeenActive);
         var go=function(){ if(started) return; started=true; el.classList.add("vid"); };
         V.addEventListener("playing",go);
         var pr=V.play(); if(pr&&pr.catch) pr.catch(function(){ V.muted=true; V.play().catch(fallback); });
@@ -795,7 +804,7 @@ body.touch:not(.scoped) #tbreath{display:none!important}
   }
   function tryEnd(){
     if(done) return;
-    if(!window.__gameReady){ el.classList.add("wait"); return; }
+    if(!window.__gameReady||!assetsDone){ el.classList.add("wait"); return; }
     done=true; for(var i=0;i<T.length;i++) clearTimeout(T[i]);
     try{ var vv=document.getElementById("intro-vid"); if(vv){ var k=setInterval(function(){ vv.volume=Math.max(0,vv.volume-.1); if(vv.volume<=0){ clearInterval(k); vv.pause(); } },70); } }catch(e){}
     el.classList.add("out"); window.__introDone=true;
@@ -11314,9 +11323,10 @@ const Assets={
   preload(onDone){
     const keys=Object.keys(ASSETS.models).concat(Object.keys(ASSETS.characters)).concat(Object.keys(ASSETS.anims||{}).map(k=>"anim:"+k));
     this.animClips=this.animClips||{};
-    if(!this.loader||!keys.length){ this.ready=true; if(onDone) onDone(0,0); return; }
+    if(!this.loader||!keys.length){ this.ready=true; try{ window.__assetProgress&&window.__assetProgress(1,1); }catch(e){} if(onDone) onDone(0,0); return; }
     let done=0, ok=0;
-    const finish=()=>{ if(++done>=keys.length){ this.ready=true; if(onDone) onDone(ok,keys.length); } };
+    const finish=()=>{ ++done; try{ if(window.__assetProgress) window.__assetProgress(done,keys.length); }catch(e){}
+      if(done>=keys.length){ this.ready=true; if(onDone) onDone(ok,keys.length); } };
     for(const k of Object.keys(ASSETS.models)){
       const def=ASSETS.models[k];
       // a bad path must degrade to the primitive, never throw out of boot
@@ -14294,7 +14304,7 @@ const Updater={
     if(this.state==="ready"&&!this._auto){ this._auto=true; setTimeout(()=>this.apply(),900); }
     document.getElementById("upd-t").textContent=this.state==="ready"
       ?("NEW VERSION"+(this.newVer?" "+this.newVer.toUpperCase():"")+" IS READY")
-      :("DOWNLOADING NEW VERSION"+(pct!=null?"  "+pct+"%":"..."));
+      :("DOWNLOADING GAME ASSETS"+(this.newVer?" "+this.newVer.toUpperCase():""));
     document.getElementById("upd-bar").style.width=(this.state==="ready"?100:(pct||3))+"%";
   },
   watch(reg){
@@ -14344,7 +14354,7 @@ const Updater={
       }catch(e){ if(this.state==="dl"){ this.state=""; const el=document.getElementById("upd"); if(el) el.classList.remove("on"); } }
       busy=false;
     };
-    setTimeout(check,4000); setInterval(check,20*60e3);
+    check(); setInterval(check,20*60e3);
     document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible") check(); });
   },
   apply(){
