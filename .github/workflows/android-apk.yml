@@ -59,7 +59,8 @@ jobs:
         working-directory: app/android
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon
+          set -o pipefail
+          ./gradlew assembleDebug --no-daemon --stacktrace 2>&1 | tee ../../gradle.log
           cp app/build/outputs/apk/debug/app-debug.apk ../../SniperRage.apk
 
       - uses: actions/upload-artifact@v4
@@ -73,3 +74,16 @@ jobs:
         run: |
           gh release delete android-latest --yes --cleanup-tag || true
           gh release create android-latest SniperRage.apk --title "Sniper Rage Android app" --notes "Offline Android build. Later updates arrive inside the game." --latest
+
+      - name: Keep the build log where it can be read
+        if: failure()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin ci-logs || true
+          git switch --orphan ci-logs-new
+          git rm -rf --cached . >/dev/null 2>&1 || true
+          tail -n 300 gradle.log > build-failure.log 2>/dev/null || echo "no gradle log" > build-failure.log
+          git add -f build-failure.log
+          git commit -m "CI build log"
+          git push -f origin HEAD:ci-logs
